@@ -4,10 +4,19 @@ part 'weather_model.g.dart';
 
 @JsonSerializable()
 class WeatherModel {
-  final double temperature; // correspond à "main.temp" dans l’API OpenWeather
+  final double temperature;
   final String cityName;
+  final String description;
+  final int humidity;
+  final double windSpeed;
 
-  WeatherModel({required this.temperature, required this.cityName});
+  WeatherModel({
+    required this.temperature,
+    required this.cityName,
+    required this.description,
+    required this.humidity,
+    required this.windSpeed,
+  });
 
   factory WeatherModel.fromJson(Map<String, dynamic> json) =>
       _$WeatherModelFromJson(json);
