@@ -9,221 +9,168 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with TickerProviderStateMixin {
-
-  bool _isDarkMode = true; // 👈 AJOUT
-
-  late AnimationController _pulseController;
-  late AnimationController _floatController;
-  late AnimationController _fadeController;
-
-  late Animation<double> _pulseAnim;
-  late Animation<double> _floatAnim;
-  late Animation<double> _fadeAnim;
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  bool isDarkMode = false;
+  late AnimationController _controller;
+  late Animation<double> _scale;
+  late Animation<double> _glow;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
 
-    _pulseController =
-    AnimationController(vsync: this, duration: const Duration(seconds: 3))
-      ..repeat(reverse: true);
-
-    _floatController =
-    AnimationController(vsync: this, duration: const Duration(seconds: 4))
-      ..repeat(reverse: true);
-
-    _fadeController =
-    AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
-      ..forward();
-
-    _pulseAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    _scale = Tween<double>(begin: 1.0, end: 1.04).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    _floatAnim = Tween<double>(begin: -10, end: 10).animate(
-      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
-    );
-
-    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
+    _glow = Tween<double>(begin: 6.0, end: 20.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
-    _floatController.dispose();
-    _fadeController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-
-    // 🎨 Couleurs dynamiques
-    final bgGradient = _isDarkMode
-        ? const [
-      Color(0xFF0A0E1A),
-      Color(0xFF0D1B2A),
-      Color(0xFF112240),
-    ]
-        : const [
-      Color(0xFFFDFBFB),
-      Color(0xFFEDEDED),
-      Color(0xFFE0E0E0),
-    ];
-
-    final mainTextColor =
-    _isDarkMode ? Colors.white : Colors.black87;
-
-    final subTextColor =
-    _isDarkMode ? Colors.white.withOpacity(0.45) : Colors.black54;
-
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: bgGradient,
+      backgroundColor: isDarkMode ? const Color(0xFF1A1F36) : const Color(0xFFF2F2F7),
+      appBar: AppBar(
+        backgroundColor: isDarkMode ? const Color(0xFF1A1F36) : const Color(0xFFF2F2F7),
+        elevation: 0,
+        actions: [
+          Container(
+            margin: EdgeInsets.only(right: 20),
+            decoration: BoxDecoration(
+              color: isDarkMode
+                  ? const Color(0xFF2A2F4A)
+                  : Color.fromRGBO(11, 15, 25, 0.2),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: IconButton(
+              icon: Icon(
+                isDarkMode ? Icons.light_mode : Icons.dark_mode_outlined,
+                size: 40,
+                color: isDarkMode ? Colors.orange : Colors.black,
+              ),
+              onPressed: () {
+                setState(() {
+                  isDarkMode = !isDarkMode;
+                });
+              },
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
+        ],
+      ),
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 30),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Image.asset(
+                "assets/images/ns3.png",
+                width: 230,
+                height: 210,
+              ),
+              SizedBox(height: 24),
 
-            /// 🌙 BOUTON MODE SOMBRE / CLAIR
-            Positioned(
-              top: 50,
-              right: 20,
-              child: IconButton(
-                icon: Icon(
-                  _isDarkMode
-                      ? Icons.dark_mode
-                      : Icons.light_mode,
-                  color: const Color(0xFFFF8C00),
-                  size: 28,
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "Météo",
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: 60,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextSpan(
+                      text: "  App",
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontSize: 60,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: () {
-                  setState(() {
-                    _isDarkMode = !_isDarkMode;
-                  });
+              ),
+              SizedBox(height: 12),
+
+              Text(
+                "Ta météo, partout dans le monde, en un clin d'œil ⚡",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey,
+                  fontSize: 30,
+                ),
+              ),
+              SizedBox(height: 40),
+
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withOpacity(0.3 + (_glow.value / 40)),
+                          blurRadius: 20 + _glow.value,
+                          spreadRadius: 2 + (_glow.value / 6),
+                          offset: Offset(0, 4),
+                        ),
+                        BoxShadow(
+                          color: Colors.orangeAccent.withOpacity(0.15),
+                          blurRadius: 40 + _glow.value,
+                          spreadRadius: 6 + (_glow.value / 4),
+                          offset: Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoadingScreen(), // ✅
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      child: Text(
+                        "Lancer l'expérience",
+                        style: TextStyle(
+                          fontSize: 35,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  );
                 },
               ),
-            ),
-
-            SafeArea(
-              child: FadeTransition(
-                opacity: _fadeAnim,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                      const SizedBox(height: 80),
-
-                      const SizedBox(height: 32),
-
-                      Text(
-                        "Votre météo,",
-                        style: TextStyle(
-                          color: mainTextColor,
-                          fontSize: 44,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ),
-                      const Text(
-                        "partout.",
-                        style: TextStyle(
-                          color: Color(0xFFFF8C00),
-                          fontSize: 44,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      Text(
-                        "Prévisions précises dans le monde entier,\nen un instant.",
-                        style: TextStyle(
-                          color: subTextColor,
-                          fontSize: 15,
-                          height: 1.6,
-                        ),
-                      ),
-
-                      const SizedBox(height: 56),
-
-                      Center(
-                        child: AnimatedBuilder(
-                          animation: _floatAnim,
-                          builder: (_, child) => Transform.translate(
-                            offset: Offset(0, _floatAnim.value),
-                            child: child,
-                          ),
-                          child: Image.asset(
-                            "assets/images/ns3.png",
-                            width: 200,
-                            height: 190,
-                          ),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                              const LoadingScreen(),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 20),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFFF8C00),
-                                Color(0xFFFF6B00),
-                              ],
-                            ),
-                            borderRadius:
-                            BorderRadius.circular(18),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Découvrir maintenant",
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Icon(Icons.arrow_forward_rounded,
-                                  color: Colors.white),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
